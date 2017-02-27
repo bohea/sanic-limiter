@@ -1,12 +1,12 @@
 # Sanic-Limiter
+A rate limiting extension inspired by flask-limiter
 Provides rate limiting features for Sanic. Supports  in-memory, redis and memcache as storage.
 
 Quickstart
 ===========
 a demo for quickstart:
 
-.. code-block:: python
-
+```
 from sanic import Sanic
 from sanic.response import text
 
@@ -33,7 +33,7 @@ async def t3(request):
     return text("t3")
 
 app.run(host="0.0.0.0", port=5000, debug=True)
-
+```
 
 
 
