@@ -2,7 +2,7 @@
 A rate limiting extension inspired by flask-limiter
 Provides rate limiting features for Sanic. Supports  in-memory, redis and memcache as storage based on alisaifee/limits.
 
-## Quickstart
+Quickstart
 ===========
 Demo for quickstart:
 
@@ -51,7 +51,7 @@ Install
     pip install sanic_limiter
 
 
-## Initialization
+Initialization
 ===================
 
 There are two basic ways:
@@ -73,7 +73,7 @@ There are two basic ways:
 	limiter.init_app(app)
 	```
 
-## Key function
+Key function
 =========================
 key function is customizable, an reasonable example is rate limiting by userid:
 
@@ -93,7 +93,7 @@ basicly, customized key function would like to access sanic request instance(not
 if key function has more than one positional argument, an exception will be rasied.
 
 
-## Rate limit string notation
+Rate limit string notation
 ================================
 
 Rate limits are specified as strings following the format:
@@ -109,12 +109,12 @@ Examples:
 * 10/hour;100/day;2000 per year
 * 100/day, 500/7days
 
-## Requirements:
+Requirements:
 ==============================
 * limits>=1.2.1  (<https://github.com/alisaifee/limits>)
 * sanic>=0.4.0
 * six>=1.4.1
 
-## References:
+References:
 =====================
 Flask-Limiter: <http://flask-limiter.readthedocs.io/en/stable/#keyfunc-customization>
