@@ -7,7 +7,7 @@ REQUIREMENTS = filter(None, open(
 
 setup(
     name='sanic_limiter',
-    version='0.1',
+    version='0.1.2',
     description='Provides rate limiting features for Sanic. Supports in-memory, redis and memcache as storage.',
     url='https://github.com/bohea/sanic-limiter',
     author='bohea',
