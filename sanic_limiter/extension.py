@@ -189,9 +189,12 @@ class Limiter(object):
                     return
                 if lim.per_method:
                     limit_scope += ":%s" % request.method
-                key_func_argvs = list(inspect.signature(lim.key_func).parameters.keys())
-                if key_func_argvs and key_func_argvs[0] == 'request':
-                    key_func_callable = partial(lim.key_func, request)
+                for k, v in inspect.signature(lim.key_func).parameters.items():
+                    if v.default is inspect._empty:
+                        key_func_callable = partial(lim.key_func, request)
+                    else:
+                        key_func_callable = lim.key_func
+                    break
                 else:
                     key_func_callable = lim.key_func
                 if not self.limiter.hit(lim.limit, key_func_callable(), limit_scope):
