@@ -45,6 +45,11 @@ Aboved demo provides:
 * all the rate limits are based on get_remote_address, you can customize yours;
 * when any rate limit is triggered, the view function will not be called and responses with http code 429;
 
+Install
+==============
+
+    pip install sanic_limiter
+
 
 ## Initialization
 ===================
