@@ -6,7 +6,7 @@ Quickstart
 ===========
 Demo for quickstart:
 
-```
+```python
 from sanic import Sanic
 from sanic.response import text
 
@@ -47,8 +47,9 @@ Aboved demo provides:
 
 Install
 ==============
-
-    pip install sanic_limiter
+```console
+pip install sanic_limiter
+```
 
 
 Initialization
@@ -58,7 +59,7 @@ There are two basic ways:
 
 * constructor:
 
-	```
+	```python
 	from sanic_limiter import Limiter, get_remote_address
 
 	limiter = Limiter(app, key_func=get_remote_address)
@@ -66,7 +67,7 @@ There are two basic ways:
 
 * init_app:
 
-	```
+	```python
 	from sanic_limiter import Limiter, get_remote_address
 
 	limiter = Limiter(key_func=get_remote_address)
@@ -77,7 +78,7 @@ Key function
 =========================
 key function is customizable, an reasonable example is rate limiting by userid:
 
-```
+```python
 def get_request_userid(request):
 	return request.args.get('userid', '')
 
