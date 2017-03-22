@@ -4,7 +4,7 @@ import logging
 
 from limits.strategies import MovingWindowRateLimiter
 from limits.storage import MemoryStorage
-from sanic import Sanic
+from sanic import Sanic, Blueprint
 from sanic.response import text
 
 from sanic_limiter.util import get_remote_address
@@ -123,3 +123,36 @@ class SanicLimiterTest(unittest.TestCase):
         self.assertEqual(429, cli.get("/t1")[1].status)
         self.assertEqual(200, cli.post("/t1")[1].status)
         self.assertEqual(200, cli.post("/t1")[1].status)
+
+    def test_bp_limit(self):
+        app, limiter = self.build_app(config={}, global_limits=['1/day'])
+        bp = Blueprint('/bp')
+        limiter.limit('2 per hour')(bp)
+
+        @bp.route("/bp1")
+        async def bp_t1(request):
+            return text("bp_t1")
+
+        app.blueprint(bp)
+
+        cli = app.test_client
+        self.assertEqual(200, cli.get("/bp1")[1].status)
+        self.assertEqual(200, cli.get("/bp1")[1].status)
+        self.assertEqual(429, cli.get("/bp1")[1].status)
+
+    def test_bp_combined_limit(self):
+        app, limiter = self.build_app(config={}, global_limits=['1/day'])
+        bp = Blueprint('/bp')
+        limiter.limit('1 per hour')(bp)
+
+        @bp.route("/bp1")
+        @limiter.limit('2 per hour')
+        async def bp_t1(request):
+            return text("bp_t1")
+
+        app.blueprint(bp)
+
+        cli = app.test_client
+        self.assertEqual(200, cli.get("/bp1")[1].status)
+        self.assertEqual(200, cli.get("/bp1")[1].status)
+        self.assertEqual(429, cli.get("/bp1")[1].status)
