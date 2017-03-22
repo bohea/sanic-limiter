@@ -12,6 +12,7 @@ from limits.errors import ConfigurationError
 from limits.storage import storage_from_string
 from limits.strategies import STRATEGIES
 from limits.util import parse_many
+from sanic.blueprints import Blueprint
 
 from .errors import RateLimitExceeded
 from .util import get_remote_address
@@ -98,6 +99,8 @@ class Limiter(object):
             )
         self._route_limits = {}
         self._dynamic_route_limits = {}
+        self._blueprint_dynamic_limits = {}
+        self._blueprint_limits = {}
         self._storage = None
         self._limiter = None
         self._storage_dead = False
@@ -153,6 +156,7 @@ class Limiter(object):
         if view_handler is None:
             return
         view_func = view_handler.handler
+        view_bpname = view_func.__dict__.get('__blueprintname__', None)
         name = ("{}.{}".format(view_func.__module__, view_func.__name__) if view_func else "")
         if (not endpoint
             or not self.enabled
@@ -176,6 +180,23 @@ class Limiter(object):
                         "failed to load ratelimit for view function %s (%s)"
                         , name, e
                     )
+        if view_bpname:
+            if view_bpname in self._blueprint_dynamic_limits and not dynamic_limits:
+                for lim in self._blueprint_dynamic_limits[view_bpname]:
+                    try:
+                        dynamic_limits.extend(
+                            ExtLimit(
+                                limit, lim.key_func, lim.scope, lim.per_method,
+                                lim.methods, lim.error_message, lim.exempt_when
+                            ) for limit in parse_many(lim.limit)
+                        )
+                    except ValueError as e:
+                        self.logger.error(
+                            "failed to load ratelimit for view blueprint %s (%s)"
+                            , view_bpname, e
+                        )
+            if view_bpname in self._blueprint_limits and not limits:
+                limits.extend(self._blueprint_limits[view_bpname])
         failed_limit = None
         try:
             all_limits = []
@@ -234,7 +255,8 @@ class Limiter(object):
 
         def _inner(obj):
             func = key_func or self._key_func
-            name = "{}.{}".format(obj.__module__, obj.__name__)
+            is_bp = True if isinstance(obj, Blueprint) else False
+            name = "{}.{}".format(obj.__module__, obj.__name__) if not is_bp else obj.name
             dynamic_limit, static_limits = None, []
             if callable(limit_value):
                 dynamic_limit = ExtLimit(limit_value, func, _scope, per_method,
@@ -247,20 +269,29 @@ class Limiter(object):
                     ) for limit in parse_many(limit_value)]
                 except ValueError as e:
                     self.logger.error("failed to configure {} {} ({})".format("view function", name, e))
-
-            @wraps(obj)
-            def __inner(*a, **k):
-                return obj(*a, **k)
-
-            if dynamic_limit:
-                self._dynamic_route_limits.setdefault(name, []).append(
-                    dynamic_limit
-                )
+            if is_bp:
+                if dynamic_limit:
+                    self._blueprint_dynamic_limits.setdefault(name, []).append(
+                        dynamic_limit
+                    )
+                else:
+                    self._blueprint_limits.setdefault(name, []).extend(
+                        static_limits
+                    )
             else:
-                self._route_limits.setdefault(name, []).extend(
-                    static_limits
-                )
-            return __inner
+                @wraps(obj)
+                def __inner(*a, **k):
+                    return obj(*a, **k)
+
+                if dynamic_limit:
+                    self._dynamic_route_limits.setdefault(name, []).append(
+                        dynamic_limit
+                    )
+                else:
+                    self._route_limits.setdefault(name, []).extend(
+                        static_limits
+                    )
+                return __inner
 
         return _inner
 
