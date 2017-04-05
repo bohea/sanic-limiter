@@ -80,11 +80,11 @@ key function is customizable, an reasonable example is rate limiting by userid:
 
 ```python
 def get_request_userid(request):
-	return request.args.get('userid', '')
+    return request.args.get('userid', '')
 
-    @limiter.limit("50/minute", key_func=get_request_userid)
-    async def t1(request):
-    	return text(t1)
+@limiter.limit("50/minute", key_func=get_request_userid)
+async def t1(request):
+    return text(t1)
 ```
 basicly, customized key function would like to access sanic request instance(not necessarily although), sanic request instance will be injected if key function has only one positional argument.
 
