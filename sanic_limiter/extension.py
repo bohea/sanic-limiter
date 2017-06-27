@@ -151,7 +151,7 @@ class Limiter(object):
         return self._limiter
 
     def __check_request_limit(self, request):
-        endpoint = request.url or ""
+        endpoint = request.path or ""
         view_handler = self.app.router.routes_static.get(endpoint, None)
         if view_handler is None:
             return
