@@ -11,7 +11,7 @@ setup(
     description='Provides rate limiting features for Sanic. Supports in-memory, redis and memcache as storage.',
     url='https://github.com/bohea/sanic-limiter',
     author='bohea',
-    author_email='libin375(at)163.com',
+    author_email='libin375@163.com',
     license='MIT',
     packages=['sanic_limiter'],
     install_requires=list(REQUIREMENTS),
