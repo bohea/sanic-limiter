@@ -124,6 +124,20 @@ class SanicLimiterTest(unittest.TestCase):
         self.assertEqual(200, cli.post("/t1")[1].status)
         self.assertEqual(200, cli.post("/t1")[1].status)
 
+    def test_dynamic_route(self):
+        app, limiter = self.build_app()
+
+        @limiter.limit("1/minute")
+        @app.route("/t1/<path>")
+        async def t1(request, path):
+            return text(path)
+
+        cli = app.test_client
+        self.assertEqual(200, cli.get("/t1/one")[1].status)
+        self.assertEqual(429, cli.get("/t1/one")[1].status)
+        self.assertEqual(200, cli.get("/t1/two")[1].status)
+        self.assertEqual(429, cli.get("/t1/two")[1].status)
+
     def test_bp_limit(self):
         app, limiter = self.build_app(config={}, global_limits=['1/day'])
         bp = Blueprint('/bp')
