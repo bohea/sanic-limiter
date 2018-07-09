@@ -33,7 +33,7 @@ async def t3(request):
 
 @app.route("/t4/<part>")
 @limiter.limit("1/minute")
-async def t1(request, part):
+async def t4(request, part):
     return text(part)
 
 app.blueprint(bp)
@@ -54,6 +54,8 @@ class DemoTest(unittest.TestCase):
         self.assertEqual(app.test_client.get('/t3')[1].status, 200)
         self.assertEqual(app.test_client.get('/t3')[1].status, 200)
         self.assertEqual(app.test_client.get('/t4/one')[1].status, 200)
+        self.assertEqual(app.test_client.get('/t4/one')[1].status, 429)
+        self.assertEqual(app.test_client.get('/t4/two')[1].status, 200)
         self.assertEqual(app.test_client.get('/t4/two')[1].status, 429)
         self.assertEqual(app.test_client.get('/bp1')[1].status, 200)
         self.assertEqual(app.test_client.get('/bp1')[1].status, 200)
