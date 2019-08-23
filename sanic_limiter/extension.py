@@ -77,7 +77,6 @@ class Limiter(object):
                  , storage_options={}
                  , swallow_errors=False
                  ):
-        self.app = app
         self.logger = logging.getLogger("sanic-limiter")
 
         self.enabled = True
@@ -117,6 +116,7 @@ class Limiter(object):
         """
         :param app: :class:`sanic.Sanic` instance to rate limit.
         """
+        self.app = app
         self.enabled = app.config.setdefault(C.ENABLED, True)
         self._swallow_errors = app.config.setdefault(
             C.SWALLOW_ERRORS, self._swallow_errors
