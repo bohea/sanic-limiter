@@ -28,6 +28,18 @@ class SanicLimiterTest(unittest.TestCase):
         limiter.logger.addHandler(mock_handler)
         return app, limiter
 
+    def build_app_init(self, config={}, **limiter_args):
+        app = Sanic(__name__)
+        for k, v in config.items():
+            app.config.setdefault(k, v)
+        limiter_args.setdefault('key_func', get_remote_address)
+        limiter = Limiter(**limiter_args)
+        limiter.init_app(app)
+        mock_handler = mock.Mock()
+        mock_handler.level = logging.INFO
+        limiter.logger.addHandler(mock_handler)
+        return app, limiter
+
     def test_config_limiter(self):
         app_config = {C.ENABLED: False, C.SWALLOW_ERRORS: True, C.STORAGE_URL: 'redis://localhost:6379/0',
                       C.STRATEGY: 'fixed-window-elastic-expiry'}
@@ -46,6 +58,18 @@ class SanicLimiterTest(unittest.TestCase):
             return text("t1")
 
         app.test_client.get("/t1")
+        request, response = app.test_client.get("/t1")
+        self.assertTrue(response.status == 429 and '1 per 1 day' in response.body.decode())
+
+    def test_limiter_response_init(self):
+        # basic test the follow the init route
+        app, limiter = self.build_app_init(config={}, global_limits=['1/day'])
+
+        @app.route("/t1")
+        async def t1(request):
+            return text("t1")
+
+        re, res = app.test_client.get("/t1")
         request, response = app.test_client.get("/t1")
         self.assertTrue(response.status == 429 and '1 per 1 day' in response.body.decode())
 
