@@ -12,8 +12,5 @@ def get_remote_address(request):
     # Seems to break on sanic 19.6.3
     if hasattr(request, 'remote_addr'):
         return request.remote_addr
-    elif hasattr(request, '_remote_addr'):
-        return request._remote_addr
-        # return reque
     else:
         return request.ip
