@@ -198,10 +198,7 @@ class Limiter(object):
                 limits.extend(self._blueprint_limits[view_bpname])
         failed_limit = None
         try:
-            all_limits = []
-            if not all_limits:
-                all_limits = (limits + dynamic_limits or self._global_limits)
-            for lim in all_limits:
+            for lim in (limits + dynamic_limits or self._global_limits):
                 limit_scope = lim.scope or endpoint
                 if lim.is_exempt:
                     return
