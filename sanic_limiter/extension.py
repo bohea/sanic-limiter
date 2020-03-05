@@ -2,7 +2,6 @@
 the sanic extension
 """
 
-from functools import partial
 import logging
 import six
 import sys
@@ -210,19 +209,18 @@ class Limiter(object):
                     return
                 if lim.per_method:
                     limit_scope += ":%s" % request.method
-                for k, v in inspect.signature(lim.key_func).parameters.items():
-                    if v.default is inspect._empty:
-                        key_func_callable = partial(lim.key_func, request)
+                for param in inspect.signature(lim.key_func).parameters.values():
+                    if param.default is inspect.Parameter.empty:
+                        key = lim.key_func(request)
                     else:
-                        key_func_callable = lim.key_func
+                        key = lim.key_func()
                     break
                 else:
-                    key_func_callable = lim.key_func
-                if not self.limiter.hit(lim.limit, key_func_callable(), limit_scope):
+                    key = lim.key_func()
+                if not self.limiter.hit(lim.limit, key, limit_scope):
                     self.logger.warning(
-                        "ratelimit %s (%s) exceeded at endpoint: %s"
-                        , lim.limit, key_func_callable(), limit_scope
-                    )
+                        "ratelimit %s (%s) exceeded at endpoint: %s",
+                        lim.limit, key, limit_scope)
                     failed_limit = lim
                     break
 
