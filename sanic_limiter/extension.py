@@ -2,7 +2,7 @@
 the sanic extension
 """
 
-from functools import wraps, partial
+from functools import partial
 import logging
 import six
 import sys
@@ -279,10 +279,6 @@ class Limiter(object):
                         static_limits
                     )
             else:
-                @wraps(obj)
-                def __inner(*a, **k):
-                    return obj(*a, **k)
-
                 if dynamic_limit:
                     self._dynamic_route_limits.setdefault(name, []).append(
                         dynamic_limit
@@ -291,7 +287,7 @@ class Limiter(object):
                     self._route_limits.setdefault(name, []).extend(
                         static_limits
                     )
-                return __inner
+                return obj
 
         return _inner
 
@@ -341,12 +337,8 @@ class Limiter(object):
         """
         name = "{}.{}".format(obj.__module__, obj.__name__)
 
-        @wraps(obj)
-        def __inner(*a, **k):
-            return obj(*a, **k)
-
         self._exempt_routes.add(name)
-        return __inner
+        return obj
 
     def request_filter(self, fn):
         """
