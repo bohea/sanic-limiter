@@ -217,6 +217,9 @@ class Limiter(object):
                     break
                 else:
                     key = lim.key_func()
+                if key is None:
+                    # Ignore empty result of the key function.
+                    continue
                 if not self.limiter.hit(lim.limit, key, limit_scope):
                     self.logger.warning(
                         "ratelimit %s (%s) exceeded at endpoint: %s",
