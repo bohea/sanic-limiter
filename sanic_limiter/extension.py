@@ -2,7 +2,6 @@
 the sanic extension
 """
 
-from functools import wraps, partial
 import logging
 import six
 import sys
@@ -152,9 +151,10 @@ class Limiter(object):
 
     def __check_request_limit(self, request):
         endpoint = request.path or ""
-        view_func, args, kwargs, uri = self.app.router.get(request)
-        if view_func is None:
+        view_handler = self.app.router.routes_static.get(endpoint, None)
+        if view_handler is None:
             return
+        view_func = view_handler.handler
         view_bpname = view_func.__dict__.get('__blueprintname__', None)
         name = ("{}.{}".format(view_func.__module__, view_func.__name__) if view_func else "")
         if (not endpoint
@@ -198,10 +198,7 @@ class Limiter(object):
                 limits.extend(self._blueprint_limits[view_bpname])
         failed_limit = None
         try:
-            all_limits = []
-            if not all_limits:
-                all_limits = (limits + dynamic_limits or self._global_limits)
-            for lim in all_limits:
+            for lim in (limits + dynamic_limits or self._global_limits):
                 limit_scope = lim.scope or endpoint
                 if lim.is_exempt:
                     return
@@ -209,19 +206,21 @@ class Limiter(object):
                     return
                 if lim.per_method:
                     limit_scope += ":%s" % request.method
-                for k, v in inspect.signature(lim.key_func).parameters.items():
-                    if v.default is inspect._empty:
-                        key_func_callable = partial(lim.key_func, request)
+                for param in inspect.signature(lim.key_func).parameters.values():
+                    if param.default is inspect.Parameter.empty:
+                        key = lim.key_func(request)
                     else:
-                        key_func_callable = lim.key_func
+                        key = lim.key_func()
                     break
                 else:
-                    key_func_callable = lim.key_func
-                if not self.limiter.hit(lim.limit, key_func_callable(), limit_scope):
+                    key = lim.key_func()
+                if key is None:
+                    # Ignore empty result of the key function.
+                    continue
+                if not self.limiter.hit(lim.limit, key, limit_scope):
                     self.logger.warning(
-                        "ratelimit %s (%s) exceeded at endpoint: %s"
-                        , lim.limit, key_func_callable(), limit_scope
-                    )
+                        "ratelimit %s (%s) exceeded at endpoint: %s",
+                        lim.limit, key, limit_scope)
                     failed_limit = lim
                     break
 
@@ -278,10 +277,6 @@ class Limiter(object):
                         static_limits
                     )
             else:
-                @wraps(obj)
-                def __inner(*a, **k):
-                    return obj(*a, **k)
-
                 if dynamic_limit:
                     self._dynamic_route_limits.setdefault(name, []).append(
                         dynamic_limit
@@ -290,7 +285,7 @@ class Limiter(object):
                     self._route_limits.setdefault(name, []).extend(
                         static_limits
                     )
-                return __inner
+                return obj
 
         return _inner
 
@@ -340,12 +335,8 @@ class Limiter(object):
         """
         name = "{}.{}".format(obj.__module__, obj.__name__)
 
-        @wraps(obj)
-        def __inner(*a, **k):
-            return obj(*a, **k)
-
         self._exempt_routes.add(name)
-        return __inner
+        return obj
 
     def request_filter(self, fn):
         """
