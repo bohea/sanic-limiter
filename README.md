@@ -127,4 +127,4 @@ Requirements:
 
 References:
 =====================
-Flask-Limiter: <http://flask-limiter.readthedocs.io/en/stable/#keyfunc-customization>
+Flask-Limiter: <http://flask-limiter.readthedocs.io/en/stable/recipes.html#keyfunc-customization>
