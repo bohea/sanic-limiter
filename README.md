@@ -1,7 +1,7 @@
 # Sanic-Limiter
 A rate limiting extension inspired by flask-limiter
 Provides rate limiting features for Sanic. Supports  in-memory, redis and memcache as storage based on alisaifee/limits.
-
+     
 Quickstart
 ===========
 Demo for quickstart:
